@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const session = require("express-session");
 const passport = require("passport");
 const path = require("path");
+const mongoose = require("mongoose");
 
 const connectDB = require("./config/db");
 
@@ -20,12 +21,30 @@ const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 
+const normalizeOrigin = (value) => value?.replace(/\/$/, "");
+const clientOrigins = [
+    process.env.CLIENT_URL,
+    ...(process.env.CLIENT_ORIGINS || "").split(",")
+]
+    .map((origin) => normalizeOrigin(origin.trim()))
+    .filter(Boolean);
+const allowedOrigins = new Set(clientOrigins.length ? clientOrigins : ["http://localhost:5173"]);
+
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
+            callback(null, true);
+            return;
+        }
+
+        callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
+    credentials: true
+};
+
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true
-}));
+app.use(cors(corsOptions));
 
 app.use(
     session({
@@ -42,6 +61,22 @@ app.use("/auth", authRoutes);
 app.use("/auth", oauthRoutes);
 app.use("/user", userRoutes);
 app.use("/payment", paymentRoutes);
+
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        database: mongoose.connection.readyState === 1 ? "connected" : "not_connected",
+        environment: process.env.NODE_ENV || "development",
+        clientOrigins: [...allowedOrigins],
+        services: {
+            email: Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS),
+            googleOAuth: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.SERVER_URL),
+            razorpay: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+            stripe: Boolean(process.env.STRIPE_SECRET_KEY),
+            storj: Boolean(process.env.STORJ_ENDPOINT && process.env.STORJ_BUCKET && process.env.STORJ_ACCESS_KEY && process.env.STORJ_SECRET_KEY)
+        }
+    });
+});
 
 app.get("/", (req, res) => {
     res.send("Server Running");

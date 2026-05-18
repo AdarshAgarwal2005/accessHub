@@ -16,8 +16,8 @@ const PlanCard = ({ plan, onSelect }) => {
         <span style={{ width: `${plan.featured ? 100 : plan.price === 0 ? 35 : 68}%` }} />
       </div>
 
-      <button className="btn btn-primary" onClick={() => onSelect(plan)} disabled={!plan.id}>
-        {plan.id ? "Buy Now" : "Add Plan ID"}
+      <button className="btn btn-primary" onClick={() => onSelect(plan)}>
+        {plan.price === 0 ? "Activate" : "Buy Now"}
       </button>
     </div>
   );

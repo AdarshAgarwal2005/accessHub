@@ -1,6 +1,6 @@
 export const PLANS = [
   {
-    id: import.meta.env.VITE_FREE_PLAN_ID || "",
+    id: import.meta.env.VITE_FREE_PLAN_ID || "free",
     planName: "Free",
     duration: 0,
     price: 0,
@@ -8,7 +8,7 @@ export const PLANS = [
     featured: false,
   },
   {
-    id: import.meta.env.VITE_SILVER_PLAN_ID || "",
+    id: import.meta.env.VITE_SILVER_PLAN_ID || "silver",
     planName: "Silver",
     duration: 30,
     price: 499,
@@ -16,7 +16,7 @@ export const PLANS = [
     featured: false,
   },
   {
-    id: import.meta.env.VITE_GOLD_PLAN_ID || "",
+    id: import.meta.env.VITE_GOLD_PLAN_ID || "gold",
     planName: "Gold",
     duration: 90,
     price: 999,

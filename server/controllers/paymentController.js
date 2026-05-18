@@ -180,13 +180,18 @@ const createRazorpayOrder = async (req, res) => {
 const verifyRazorpayPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { RAZORPAY_KEY_SECRET } = process.env;
+
+        if (!RAZORPAY_KEY_SECRET) {
+            return sendError(res, 500, "Razorpay secret is not configured");
+        }
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return sendError(res, 400, "Missing Razorpay payment details");
         }
 
         const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .createHmac("sha256", RAZORPAY_KEY_SECRET)
             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest("hex");
 

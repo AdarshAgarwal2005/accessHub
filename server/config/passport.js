@@ -2,7 +2,17 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
 
-passport.use(
+const hasGoogleOAuthConfig = Boolean(
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.SERVER_URL
+);
+
+if (!hasGoogleOAuthConfig) {
+    console.warn("Google OAuth is not fully configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and SERVER_URL.");
+}
+
+if (hasGoogleOAuthConfig) passport.use(
     new GoogleStrategy(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
