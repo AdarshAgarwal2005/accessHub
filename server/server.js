@@ -80,6 +80,7 @@ app.get("/health", (req, res) => {
         services: {
             email: Boolean(process.env.RESEND_API_KEY || (process.env.EMAIL_USER && process.env.EMAIL_PASS)),
             emailProvider: process.env.EMAIL_PROVIDER || (process.env.RESEND_API_KEY ? "resend" : "gmail"),
+            emailVerificationRequired: process.env.EMAIL_VERIFICATION_REQUIRED !== "false",
             googleOAuth: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.SERVER_URL),
             razorpay: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
             stripe: Boolean(process.env.STRIPE_SECRET_KEY),

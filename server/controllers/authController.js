@@ -7,6 +7,7 @@ const sendEmail = require("../utils/sendEmail");
 
 const sendError = (res, status, message) => res.status(status).json({ message });
 const makeToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const emailVerificationDisabled = () => process.env.EMAIL_VERIFICATION_REQUIRED === "false";
 const verificationEmail = (link) => ({
     text: `Verify your AccessHub account: ${link}`,
     html: `
@@ -48,20 +49,30 @@ const signup = async (req, res) => {
 
         const verificationToken = crypto.randomBytes(32).toString("hex");
 
+        let user;
+
         if (userExists) {
             userExists.name = name;
             userExists.password = await bcrypt.hash(password, 10);
             userExists.verificationToken = verificationToken;
-            await userExists.save();
+            user = await userExists.save();
         }
         else {
             const hashedPassword = await bcrypt.hash(password, 10);
-            await User.create({
+            user = await User.create({
                 name,
                 email,
                 password: hashedPassword,
-                verificationToken
+                verificationToken,
+                isVerified: emailVerificationDisabled()
             });
+        }
+
+        if (emailVerificationDisabled()) {
+            user.isVerified = true;
+            user.verificationToken = undefined;
+            await user.save();
+            return res.status(201).json({ message: "Signup successful" });
         }
 
         const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
@@ -125,6 +136,11 @@ const signin = async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) return sendError(res, 400, "User not found");
+        if (!user.isVerified && emailVerificationDisabled()) {
+            user.isVerified = true;
+            user.verificationToken = undefined;
+            await user.save();
+        }
         if (!user.isVerified) return sendError(res, 400, "Please verify your email first");
 
         const passwordMatches = await bcrypt.compare(password, user.password);
