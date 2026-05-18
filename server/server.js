@@ -29,14 +29,14 @@ const clientOrigins = [
     .map((origin) => normalizeOrigin(origin.trim()))
     .filter(Boolean);
 const allowedOrigins = new Set(clientOrigins.length ? clientOrigins : ["http://localhost:5173"]);
-const allowedOriginPatterns = clientOrigins
-    .filter((origin) => origin.includes("*"))
-    .map((origin) => new RegExp(`^${origin.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\\\*/g, ".*")}$`));
+const allowedOriginSuffixes = clientOrigins
+    .filter((origin) => origin.startsWith("https://*."))
+    .map((origin) => origin.replace("https://*.", ""));
 
 const isAllowedOrigin = (origin) => {
     const normalizedOrigin = normalizeOrigin(origin);
     return allowedOrigins.has(normalizedOrigin) ||
-        allowedOriginPatterns.some((pattern) => pattern.test(normalizedOrigin));
+        allowedOriginSuffixes.some((suffix) => normalizedOrigin.endsWith(`.${suffix}`));
 };
 
 const corsOptions = {
