@@ -32,10 +32,9 @@ const sendWithGmail = async ({ to, subject, text, html }) => {
 
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
+        port: 465,
+        secure: true,
         family: 4,
-        requireTLS: true,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
@@ -58,7 +57,19 @@ const sendEmail = async (email, subject, text, html) => {
     const provider = (process.env.EMAIL_PROVIDER || "auto").toLowerCase();
 
     if (provider === "gmail") {
-        await sendWithGmail({ to: email, subject, text, html });
+        try {
+            await sendWithGmail({ to: email, subject, text, html });
+        }
+        catch (error) {
+            console.error("Gmail email failed:", {
+                code: error.code,
+                command: error.command,
+                responseCode: error.responseCode,
+                response: error.response,
+                message: error.message
+            });
+            throw error;
+        }
         return;
     }
 
