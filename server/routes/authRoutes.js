@@ -8,6 +8,7 @@ const protect =
 const {
     signup,
     signin,
+    resendVerification,
     verifyEmail,
     getMe
 } = require("../controllers/authController");
@@ -15,6 +16,8 @@ const {
 router.post("/signup", signup);
 
 router.post("/signin", signin);
+
+router.post("/resend-verification", resendVerification);
 
 router.get("/verify/:token", verifyEmail);
 

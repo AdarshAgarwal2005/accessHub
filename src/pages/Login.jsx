@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
@@ -9,7 +10,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const from = location.state?.from?.pathname || "/dashboard";
 
@@ -17,6 +20,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setMessage("");
     try {
       await login(email, password);
       navigate(from, { replace: true });
@@ -24,6 +28,21 @@ const Login = () => {
       setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await API.post("/auth/resend-verification", { email });
+      setMessage(res.data?.message || "Verification email sent");
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not send verification email");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -37,6 +56,7 @@ const Login = () => {
       <form className="card auth-card" onSubmit={handleSubmit}>
         <h2>Login</h2>
         {error && <p className="error">{error}</p>}
+        {message && <p className="success">{message}</p>}
 
         <input
           type="email"
@@ -57,6 +77,17 @@ const Login = () => {
         <button className="btn btn-primary" type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        {error.toLowerCase().includes("verify") && (
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleResendVerification}
+            disabled={resending || !email}
+          >
+            {resending ? "Sending..." : "Resend verification email"}
+          </button>
+        )}
 
         <button type="button" className="btn btn-outline" onClick={handleGoogleLogin}>
           Continue with Google
