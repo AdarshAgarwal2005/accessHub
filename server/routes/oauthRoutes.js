@@ -27,9 +27,8 @@ router.get(
             { expiresIn: "7d" }
         );
 
-        res.redirect(
-    `http://localhost:5173/oauth-success?token=${token}`
-);
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        res.redirect(`${clientUrl}/oauth-success?token=${token}`);
     }
 );
 
