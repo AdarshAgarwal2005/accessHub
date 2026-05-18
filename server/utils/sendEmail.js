@@ -52,9 +52,22 @@ const sendWithGmail = async ({ to, subject, text, html }) => {
 };
 
 const sendEmail = async (email, subject, text, html) => {
-    if (process.env.RESEND_API_KEY) {
-        await sendWithResend({ to: email, subject, text, html });
+    const provider = (process.env.EMAIL_PROVIDER || "auto").toLowerCase();
+
+    if (provider === "gmail") {
+        await sendWithGmail({ to: email, subject, text, html });
         return;
+    }
+
+    if (process.env.RESEND_API_KEY) {
+        try {
+            await sendWithResend({ to: email, subject, text, html });
+            return;
+        }
+        catch (error) {
+            if (provider === "resend") throw error;
+            console.warn("Resend email failed, falling back to Gmail:", error.message);
+        }
     }
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
