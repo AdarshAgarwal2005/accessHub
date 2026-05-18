@@ -21,23 +21,32 @@ const publicUser = (user) => ({
 
 const signup = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, password } = req.body;
+        const email = req.body.email?.trim().toLowerCase();
         if (!name || !email || !password) {
             return sendError(res, 400, "All fields are required");
         }
 
         const userExists = await User.findOne({ email });
-        if (userExists) return sendError(res, 400, "User already exists");
+        if (userExists?.isVerified) return sendError(res, 400, "User already exists");
 
         const verificationToken = crypto.randomBytes(32).toString("hex");
-        const hashedPassword = await bcrypt.hash(password, 10);
 
-        await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            verificationToken
-        });
+        if (userExists) {
+            userExists.name = name;
+            userExists.password = await bcrypt.hash(password, 10);
+            userExists.verificationToken = verificationToken;
+            await userExists.save();
+        }
+        else {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await User.create({
+                name,
+                email,
+                password: hashedPassword,
+                verificationToken
+            });
+        }
 
         const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
         await sendEmail(
